@@ -43,7 +43,6 @@ while true; do
 
     echo "$MENSAGEM" >> "$LOGFILE"
 
-    # Atualiza os valores para a próxima iteração
     ARQUIVOS_ANTES="$ARQUIVOS_AGORA"
     COUNT_ANTES="$COUNT_AGORA"
   fi
