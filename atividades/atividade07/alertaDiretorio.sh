@@ -1,50 +1,47 @@
 #!/bin/bash
 
 if [ "$#" -ne 2 ]; then
-  echo "Uso: $0 <intervalo_em_segundos> <diretorio_para_monitorar>"
+  echo "Uso: $0 <intervalo_em_segundos> <caminho_do_diretorio>"
   exit 1
 fi
 
 INTERVALO=$1
 DIRETORIO=$2
-LOGFILE="dirSensors.log"
+LOG_FILE="dirSensors.log"
 
 if [ ! -d "$DIRETORIO" ]; then
-  echo "Erro: O diretório '$DIRETORIO' não existe."
+  echo "Erro: O diretório $DIRETORIO não existe."
   exit 1
 fi
 
-listar_arquivos() {
-  ls "$DIRETORIO"
-}
-
-ARQUIVOS_ANTES=$(listar_arquivos)
-COUNT_ANTES=$(echo "$ARQUIVOS_ANTES" | wc -l)
+arquivos_anteriores=($(ls -1 "$DIRETORIO"))
+quantidade_anterior=${#arquivos_anteriores[@]}
 
 while true; do
-  sleep $INTERVALO
+  sleep "$INTERVALO"
 
-  ARQUIVOS_AGORA=$(listar_arquivos)
-  COUNT_AGORA=$(echo "$ARQUIVOS_AGORA" | wc -l)
+  arquivos_atuais=($(ls -1 "$DIRETORIO"))
+  quantidade_atual=${#arquivos_atuais[@]}
 
-  if [ "$COUNT_ANTES" -ne "$COUNT_AGORA" ]; then
-    DATA=$(date "+%d-%m-%Y %H:%M:%S")
+  if [ "$quantidade_anterior" -ne "$quantidade_atual" ]; then
+    data=$(date "+%d-%m-%Y %H:%M:%S")
 
-    ADICIONADOS=$(comm -13 <(echo "$ARQUIVOS_ANTES" | sort) <(echo "$ARQUIVOS_AGORA" | sort))
-    REMOVIDOS=$(comm -23 <(echo "$ARQUIVOS_ANTES" | sort) <(echo "$ARQUIVOS_AGORA" | sort))
+    adicionados=($(comm -13 <(printf "%s\n" "${arquivos_anteriores[@]}" | sort) <(printf "%s\n" "${arquivos_atuais[@]}" | sort)))
+    removidos=($(comm -23 <(printf "%s\n" "${arquivos_anteriores[@]}" | sort) <(printf "%s\n" "${arquivos_atuais[@]}" | sort)))
 
-    MENSAGEM="$DATA Alteração! $COUNT_ANTES->$COUNT_AGORA."
-    if [ -n "$REMOVIDOS" ]; then
-      MENSAGEM+=" Removidos: $REMOVIDOS."
+    mensagem="[$data] Alteração! $quantidade_anterior->$quantidade_atual."
+    if [ "${#adicionados[@]}" -gt 0 ]; then
+      mensagem+=" Adicionados: ${adicionados[*]}"
     fi
-    if [ -n "$ADICIONADOS" ]; then
-      MENSAGEM+=" Adicionados: $ADICIONADOS."
+    if [ "${#removidos[@]}" -gt 0 ]; then
+      mensagem+=" Removidos: ${removidos[*]}"
     fi
 
-    echo "$MENSAGEM" >> "$LOGFILE"
+    echo "$mensagem" | tee -a "$LOG_FILE"
 
-    ARQUIVOS_ANTES="$ARQUIVOS_AGORA"
-    COUNT_ANTES="$COUNT_AGORA"
+    arquivos_anteriores=(${arquivos_atuais[@]})
+    quantidade_anterior=$quantidade_atual
   fi
 
 done
+
