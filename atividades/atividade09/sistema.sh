@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Função para exibir o menu
 menu() {
     clear
     echo "===== Monitor de Sistema ====="
@@ -15,7 +14,6 @@ menu() {
     echo -n "Escolha uma opção: "
 }
 
-# Loop principal
 while true; do
     menu
     read opcao
